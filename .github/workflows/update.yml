@@ -1,0 +1,40 @@
+name: Auto Update FIFA World Cup 2026 ICS
+
+on:
+  schedule:
+    - cron: '0 2,14 * * *' # Run twice a day (02:00 and 14:00 UTC) to get updates.
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update Chinese ICS
+        run: |
+          python3 translate_fifa_ics.py -o fifa-world-cup-2026.zh.ics
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fifa-world-cup-2026.zh.ics
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes in the ICS file."
+          else
+            git commit -m "chore: auto-update translated ICS calendar"
+            git push
+            echo "ICS file updated successfully."
+          fi
